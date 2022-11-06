@@ -163,6 +163,7 @@ def find_router_for_ip(routers, ip):
         # that we got previously
         if ips_same_subnet(addr, ip, netmask):
             return addr
+
     return None    
 
 
@@ -183,35 +184,38 @@ def get_curr_node(to_visit, distance):
 def get_neighbor_distance(routers, curr_node, neighbor):
 
     # Iterate through to get to the desired neighbors and its value
-    curr_node_info = routers[curr_node]
+    curr_node_connections = routers[curr_node]['connections']
+    neighbors_dist = curr_node_connections[neighbor]['ad']
 
-    curr_node_connections = curr_node_info['connections']
+    return neighbors_dist
 
-    curr_node_neighbor = curr_node_connections[neighbor]
-
-    neighbor_dist = curr_node_neighbor['ad']
-
-    return neighbor_dist
-
-def get_return_graph(src, dest, parent):
+def create_graph(src, dest, parent):
 
     # Begin with dest node
     curr_node = dest
     graph = []
 
     while curr_node != src:
-        #Add curent node and then update current node to it's parent
-        graph.append(curr_node)
-        curr_node = parent[curr_node]
+        graph.append(curr_node) # Add curent node
+        curr_node = parent[curr_node] # Update current node to parent
 
-    # Add in the source node 
-    graph.append(src)
+    graph.append(src) # Add in the source node 
 
-    # Need to reverse list now
-    graph.reverse()
+    graph.reverse() # Need to reverse list now
 
     return graph
 
+def same_subnet(src_ip, dest_ip, routers):
+    
+    # Check if routers are on same subnet and if so return empty list
+    global src 
+    global dest 
+    src = find_router_for_ip(routers, src_ip)
+    dest = find_router_for_ip(routers, dest_ip)
+    if ips_same_subnet(src, dest, '/24'):
+        return []
+    else:
+        return src, dest
 
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
@@ -266,43 +270,35 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
     function. Having it all built as a single wall of code is a recipe
     for madness.
     """
+    same_subnet(src_ip, dest_ip, routers)
 
-    # Check if routers are on same subnet and if so return empty list
-    src = find_router_for_ip(routers, src_ip)
-    dest = find_router_for_ip(routers, dest_ip)
-    if ips_same_subnet(src, dest, '/24'):
-        return []
-
-
-    to_visit = set() # List of all needs need to vist
+    to_visit = set() # Set of all nodes we need to vist
     distance = {} # For any given node, it will hold distance from itself to start node
     parent = {} # List key of node that leads back to the start along shortest path
 
-    for n in routers:
-        parent[n] = None
-        distance[n] = math.inf
-        to_visit.add(n) 
+    for router in routers: # For each router in our routers argument
+        parent[router] = None
+        distance[router] = math.inf
+        to_visit.add(router) 
 
     distance[src] = 0
-    while len(to_visit) != 0:
-        # Get the curr_node
-        curr_node = get_curr_node(to_visit, distance)
 
-        # For each neighbor of curr_node
-        for neighbor in routers[curr_node]['connections']:
+    while to_visit:
 
-            if neighbor in to_visit:
+        curr_node = get_curr_node(to_visit, distance) # Get the curr_node
+        for neighbor in routers[curr_node]['connections']: # For each neighbor of curr_node
+
+            if neighbor in to_visit: # If the neighbor hasn't been checked
+
                 neighbors_dist = get_neighbor_distance(routers, curr_node, neighbor) # Update distance of shortest path
-                dist = distance[curr_node] + neighbors_dist
+                curr_distance = distance[curr_node] + neighbors_dist
 
-                # If the dist of our current node to the neighbor is shorter than the neighbors current distance, update it
-                if dist < distance[neighbor]:
-                    distance[neighbor] = dist
+                if curr_distance < distance[neighbor]: # If the dist of our current node to the neighbor is shorter than the neighbors current distance
+                    
+                    distance[neighbor] = curr_distance # Update it
                     parent[neighbor] = curr_node
-                
-
-    # Go through the nodes backwards using parent dict to get "graph" 
-    graph = get_return_graph(src, dest, parent)
+    
+    graph = create_graph(src, dest, parent) # Go through the nodes backwards using parent dict to get "graph" 
     return graph
 
 #------------------------------
