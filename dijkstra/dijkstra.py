@@ -1,6 +1,171 @@
+# Caleb Knight
+# Project 7
+# Routing with Dijkstra
+
+
 import sys
 import json
 import math  # If you want to use math.inf for infinity
+
+
+def ipv4_to_value(ipv4_addr):
+    """
+    Convert a dots-and-numbers IP address to a single numeric value.
+
+    Example:
+
+    There is only one return value, but it is shown here in 3 bases.
+
+    ipv4_addr: "255.255.0.0"
+    return:    0xffff0000 0b11111111111111110000000000000000 4294901760
+
+    ipv4_addr: "1.2.3.4"
+    return:    0x01020304 0b00000001000000100000001100000100 16909060
+    """
+
+    # First use split to get individual nums
+    ip_bytes = ipv4_addr.split('.')
+
+    # Need to loop through nums to make ints
+    decimal = 0 
+    for b in range(len(ip_bytes)):
+        ints = int(b)
+        # Build nums by shifting hex nums ex: (0xc6 << 24) | ....
+        ip_bytes[b] = int(ip_bytes[b]) << (24-(b*8))
+        decimal += ip_bytes[b]
+    return decimal
+
+def get_subnet_mask_value(slash):
+    """
+    Given a subnet mask in slash notation, return the value of the mask
+    as a single number. The input can contain an IP address optionally,
+    but that part should be discarded.
+
+    Example:
+
+    There is only one return value, but it is shown here in 3 bases.
+
+    slash:  "/16"
+    return: 0xffff0000 0b11111111111111110000000000000000 4294901760
+
+    slash:  "10.20.30.40/23"
+    return: 0xfffffe00 0b11111111111111111111111000000000 4294966784
+    """
+
+    # Check if it is in ipv4 format, if so get just the subnet
+    if '.' in slash:
+        subnet_mask = slash.split('/')
+        subnet_mask = subnet_mask[1]
+
+    # If not, just get the subnet number
+    else:
+        subnet_mask = slash.split('/')
+        subnet_mask = subnet_mask[1]
+    
+    subnet_mask = int(subnet_mask)
+    subnet_val = 0
+
+    for x in range(32):
+        if x < int(slash.split('/')[1]): 
+            subnet_val = (subnet_val << 1) + 1
+        else:
+            subnet_val = (subnet_val << 1)
+
+    return subnet_val
+
+def ips_same_subnet(ip1, ip2, slash):
+    """
+    Given two dots-and-numbers IP addresses and a subnet mask in slash
+    notataion, return true if the two IP addresses are on the same
+    subnet.
+
+    FOR FULL CREDIT: this must use your get_subnet_mask_value() and
+    ipv4_to_value() functions. Don't do it with pure string
+    manipulation.
+
+    This needs to work with any subnet from /1 to /31
+
+    Example:
+
+    ip1:    "10.23.121.17"
+    ip2:    "10.23.121.225"
+    slash:  "/23"
+    return: True
+    
+    ip1:    "10.23.230.22"
+    ip2:    "10.24.121.225"
+    slash:  "/16"
+    return: False
+    """
+
+    # Get the address from ipv4
+    ip1_addr = ipv4_to_value(ip1)
+    ip2_addr = ipv4_to_value(ip2)
+
+    # Get subnet too
+    subnet_mask = get_subnet_mask_value(slash)
+
+    # Make networks ints and use bitwise addr & subnet
+    ip1_network = (ip1_addr & subnet_mask)
+    ip2_network = (ip2_addr & subnet_mask)
+
+    # Compare
+    if ip1_network == ip2_network:
+        return True
+
+    else: 
+        return False
+        
+def find_router_for_ip(routers, ip):
+    """
+    Search a dictionary of routers (keyed by router IP) to find which
+    router belongs to the same subnet as the given IP.
+
+    Return None if no routers is on the same subnet as the given IP.
+
+    FOR FULL CREDIT: you must do this by calling your ips_same_subnet()
+    function.
+
+    Example:
+
+    [Note there will be more data in the routers dictionary than is
+    shown here--it can be ignored for this function.]
+
+    routers: {
+        "1.2.3.1": {
+            "netmask": "/24"
+        },
+        "1.2.4.1": {
+            "netmask": "/24"
+        }
+    }
+    ip: "1.2.3.5"
+    return: "1.2.3.1"
+
+
+    routers: {
+        "1.2.3.1": {
+            "netmask": "/24"
+        },
+        "1.2.4.1": {
+            "netmask": "/24"
+        }
+    }
+    ip: "1.2.5.6"
+    return: None
+    """
+
+    # Go through the routers and get the netmask num
+    for addr in routers:
+        netmask = routers[addr]["netmask"]
+
+        # Check if the ips are on the same subnet based off of the netmask
+        # that we got previously
+        if ips_same_subnet(addr, ip, netmask):
+            return addr
+    return None    
+
+
 
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
