@@ -166,6 +166,20 @@ def find_router_for_ip(routers, ip):
     return None    
 
 
+def get_curr_node(to_visit, distance):
+
+    # Get the first value in the list
+    curr_node = next(iter(to_visit))
+
+    # Iterate through nodes left to visit and determine if this node is weighted better
+    for n in to_visit:
+        if distance[n] < distance[curr_node]:
+            curr_node = n
+
+    to_visit.remove(curr_node)
+
+    return curr_node
+
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
     This function takes a dictionary representing the network, a source
