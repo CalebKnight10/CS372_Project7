@@ -180,6 +180,39 @@ def get_curr_node(to_visit, distance):
 
     return curr_node
 
+def get_neighbor_distance(routers, curr_node, neighbor):
+
+    # Iterate through to get to the desired neighbors and its value
+    curr_node_info = routers[curr_node]
+
+    curr_node_connections = curr_node_info['connections']
+
+    curr_node_neighbor = curr_node_connections[neighbor]
+
+    neighbor_dist = curr_node_neighbor['ad']
+
+    return neighbor_dist
+
+def get_return_graph(src, dest, parent):
+
+    # Begin with dest node
+    curr_node = dest
+    graph = []
+
+    while curr_node != src:
+        #Add curent node and then update current node to it's parent
+        graph.append(curr_node)
+        curr_node = parent[curr_node]
+
+    # Add in the source node 
+    graph.append(src)
+
+    # Need to reverse list now
+    graph.reverse()
+
+    return graph
+
+
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
     """
     This function takes a dictionary representing the network, a source
@@ -241,24 +274,36 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
         return []
 
 
-    to_visit = [] # List of all needs need to vist
+    to_visit = set() # List of all needs need to vist
     distance = {} # For any given node, it will hold distance from itself to start node
     parent = {} # List key of node that leads back to the start along shortest path
 
     for n in routers:
         parent[n] = None
         distance[n] = math.inf
-        to_visit += n 
+        to_visit.add(n) 
 
+    distance[src] = 0
+    while len(to_visit) != 0:
+        # Get the curr_node
+        curr_node = get_curr_node(to_visit, distance)
 
-    while to_visit is not []:
-        # Find node in to_visit that is the smallest distance -> curr_node
-        # Remove curr_node from to_visit
-        # For each of curr_node's neighbors in to_visit:
-            # Compute dist from start to neighbor (This is dist of curr_node + weight of neighbor)
-            # If the comp dist is less than the neighbors curr value in distance:
-                # Set neighbor val in distance to comp dist
-                # Set neighbors parent to curr_node
+        # For each neighbor of curr_node
+        for neighbor in routers[curr_node]['connections']:
+
+            if neighbor in to_visit:
+                neighbors_dist = get_neighbor_distance(routers, curr_node, neighbor) # Update distance of shortest path
+                dist = distance[curr_node] + neighbors_dist
+
+                # If the dist of our current node to the neighbor is shorter than the neighbors current distance, update it
+                if dist < distance[neighbor]:
+                    distance[neighbor] = dist
+                    parent[neighbor] = curr_node
+                
+
+    # Go through the nodes backwards using parent dict to get "graph" 
+    graph = get_return_graph(src, dest, parent)
+    return graph
 
 #------------------------------
 # DO NOT MODIFY BELOW THIS LINE
@@ -293,4 +338,3 @@ def main(argv):
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
-    
