@@ -115,7 +115,7 @@ def ips_same_subnet(ip1, ip2, slash):
 
     else: 
         return False
-        
+
 def find_router_for_ip(routers, ip):
     """
     Search a dictionary of routers (keyed by router IP) to find which
@@ -154,6 +154,14 @@ def find_router_for_ip(routers, ip):
     ip: "1.2.5.6"
     return: None
     """
+
+    # Check if routers are on same subnet and if so return empty list
+    src = find_router_for_ip(routers, src_ip)
+    dest = find_router_for_ip(routers, dest_ip)
+    if ips_same_subnet(src, dest, '/24'):
+        return []
+
+
 
     # Go through the routers and get the netmask num
     for addr in routers:
