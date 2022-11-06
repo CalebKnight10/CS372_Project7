@@ -56,8 +56,23 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
     for madness.
     """
 
-    # TODO Write me!
-    pass
+    to_visit = [] # List of all needs need to vist
+    distance = {} # For any given node, it will hold distance from itself to start node
+    parent = {} # List key of node that leads back to the start along shortest path
+
+    for n in nodes:
+        parent{n} = None
+        distance{n} = math.inf
+        to_visit += n 
+
+    while to_visit is not []:
+        # Find node in to_visit that is the smallest distance -> curr_node
+        # Remove curr_node from to_visit
+        # For each of curr_node's neighbors in to_visit:
+            # Compute dist from start to neighbor (This is dist of curr_node + weight of neighbor)
+            # If the comp dist is less than the neighbors curr value in distance:
+                # Set neighbor val in distance to comp dist
+                # Set neighbors parent to curr_node
 
 #------------------------------
 # DO NOT MODIFY BELOW THIS LINE
