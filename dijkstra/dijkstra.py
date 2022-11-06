@@ -155,14 +155,6 @@ def find_router_for_ip(routers, ip):
     return: None
     """
 
-    # Check if routers are on same subnet and if so return empty list
-    src = find_router_for_ip(routers, src_ip)
-    dest = find_router_for_ip(routers, dest_ip)
-    if ips_same_subnet(src, dest, '/24'):
-        return []
-
-
-
     # Go through the routers and get the netmask num
     for addr in routers:
         netmask = routers[addr]["netmask"]
@@ -172,7 +164,6 @@ def find_router_for_ip(routers, ip):
         if ips_same_subnet(addr, ip, netmask):
             return addr
     return None    
-
 
 
 def dijkstras_shortest_path(routers, src_ip, dest_ip):
@@ -229,14 +220,22 @@ def dijkstras_shortest_path(routers, src_ip, dest_ip):
     for madness.
     """
 
+    # Check if routers are on same subnet and if so return empty list
+    src = find_router_for_ip(routers, src_ip)
+    dest = find_router_for_ip(routers, dest_ip)
+    if ips_same_subnet(src, dest, '/24'):
+        return []
+
+
     to_visit = [] # List of all needs need to vist
     distance = {} # For any given node, it will hold distance from itself to start node
     parent = {} # List key of node that leads back to the start along shortest path
 
-    for n in nodes:
-        parent{n} = None
-        distance{n} = math.inf
+    for n in routers:
+        parent[n] = None
+        distance[n] = math.inf
         to_visit += n 
+
 
     while to_visit is not []:
         # Find node in to_visit that is the smallest distance -> curr_node
